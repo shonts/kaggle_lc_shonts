@@ -16,3 +16,5 @@ Scripts could be placed into a more accessible python package
 code could be optimized for speed / memory intensity
 
 conceptual
+loan purpose very data-rich field. Use NLP to tie borrower sentiment, word choice to loan performance
+https://www8.gsb.columbia.edu/newsroom/newsn/5568/words-used-on-loan-applications-can-predict-likelihood-of-default-according-to-new-research-from-columbia-business-school
