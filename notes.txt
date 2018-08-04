@@ -1,4 +1,18 @@
 
 
 prepayment risk
+"Assume a 36 month investment period for each loan"
+could proceeds reinvest proceeds
+
 time dimensionality and orig attribute arbitrage
+
+
+
+Further work
+
+technical/data
+This dataset is about 30 months out of date, getting an updated dataset would provide larger sample pool
+Scripts could be placed into a more accessible python package
+code could be optimized for speed / memory intensity
+
+conceptual
