@@ -1,7 +1,5 @@
 
 
-time dimensionality and orig attribute arbitrage
-
 it appears there are differences between funded_amt and funded_amt_inv (principal coming from external investor). It would be interesting to investigate how lending club allocates principal from external investors vs. its own book.
 
 
@@ -9,10 +7,29 @@ statistics:
 especially at the lower grades, there's not a clear relationship between annual income or dti and grade / rate. Intiutively we would expect these two characteristics to be very tightly correlated with risk, so this result is surprising.
 
 
+Figure 1 (Average Interest Rate by Vintage Month, Grade):
+
+the tightening of spreads for the higher grades since 2012 will not be captured in my analysis below, but is worth further investigation
+
+Figure 2 (Funded Amount by Vintage Month, Grade):
+
+
 
 prepayment risk
 "Assume a 36 month investment period for each loan"
-could proceeds reinvest proceeds
+could continually reinvest proceeds and principal payments -- a more sophisticated model could account for this.
+
+
+
+
+MODEL
+Given the time limitations to this task, the goal was to create an intiutive model of factors that might drive abnormal returns for lendig club loans. Various machine learning models were rejected because of complexity, perils resulting from over-fitting, and inability to coherently interpret the model parameters.
+I ran three simple linear ("Ordinary Least Squares") regressions on several credit characteristics of the borrowers, using my calculated annual return as the dependendent variable. The first model used the entire set of 36 month loans which have a full 36 months of performance history. The second and third models simply split the population between loans originated before December, 2010 and after. My hypothesis is that, given the public availability of this dataset and the growing sophistication of investors in the space, that any clear relationships existing in the data early on will have been noticed by reseachers, and the excess returns will have been arbitraged out of the data in the latter half of the performance history.
+
+If i had the resources to create a more sophisticated model of performance -- for example, one encompassing more credit attributes, or using more complex machine learning algorithms -- i would similarly parameterize the model using this earlier set of performance history and validate whether these relationships hold in the second half of this history (i.e. the training set would be the early loan vintages and the testing set would be the more recent vintages).
+
+
+time dimensionality and orig attribute arbitrage
 
 
 
@@ -27,4 +44,4 @@ conceptual
 loan purpose very data-rich field. Use NLP to tie borrower sentiment, word choice to loan performance
 https://www8.gsb.columbia.edu/newsroom/newsn/5568/words-used-on-loan-applications-can-predict-likelihood-of-default-according-to-new-research-from-columbia-business-school
 
-The performance of loans in 2007-2009 is likely highly informative to the performance of this asset class at the end of a credit cycle, and could likely be very useful for approximating the default behavior of . Perhaps when assesing an appropriate risk position a further investigation of this period, despite the low volume of originations could be useful.
+The performance of loans in 2007-2009 is likely highly informative to the performance of this asset class at the end of a credit cycle, and could likely be very useful for approximating the default behavior of the current cohort of loans. Perhaps when assesing an appropriate risk position a further investigation of this period, despite the low volume of originations, could be useful.
