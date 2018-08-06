@@ -8,28 +8,34 @@ def load():
 	loan_path = "loan.csv"
 
 	print("Loading csv . . .")
-	loan = pd.read_csv(loan_path, low_memory = False)
+	loan_df = pd.read_csv(loan_path, low_memory = False)
+	print("Done loading csv. Adding return columns")
 
 	# issue_d column is a string, i.e. Apr-2012. format as datetime:
-	loan['vintage_month'] = pd.to_datetime(loan['issue_d'], format='%b-%Y')
-	loan['vintage_year'] = loan['vintage_month'].map(lambda x: x.year)
+	loan_df['vintage_month'] = pd.to_datetime(loan['issue_d'], format='%b-%Y')
+	loan_df['vintage_year'] = loan_df['vintage_month'].map(lambda x: x.year)
+
 	# total cash returned to investor on loan is the payments rec'd plus the recoveries minus recovery fees
-	loan['total_cash_in'] = loan['total_pymnt_inv'] + loan['recoveries'] - loan['collection_recovery_fee']
+	loan_df['total_cash_in'] = loan_df['total_pymnt_inv'] + loan_df['recoveries'] - loan_df['collection_recovery_fee']
+
 	# total return is defined as (cash in - cash invested) / (cash invested)
-	loan['total_return'] = (loan['total_cash_in'] - loan['funded_amnt_inv']) / loan['funded_amnt_inv']
+	loan_df['total_return'] = (loan_df['total_cash_in'] - loan_df['funded_amnt_inv']) / loan_df['funded_amnt_inv']
+
 	# annualized return assumes holding period of full 36 months (even if loan prepays or charges off)
 	# this underestimates returns, as prepayed principal could be re-invested
-	loan['annualized_return'] = ((loan['total_return'] + 1) ** (1.0/3)) - 1
-	print("Done loading csv and adding return columns")
-	return loan
+	loan_df['annualized_return'] = ((loan_df['total_return'] + 1) ** (1.0/3)) - 1
 
-def summarize():
-	loans_by_grade = loan.groupby(['term', 'grade']).agg({
+	print("Done adding return columns")
+	return loan_df
+
+def summarize(loan_df):
+	loans_by_grade = loan_df.groupby(['term', 'grade']).agg({
 			'funded_amnt': ['min', 'mean', 'max', 'sum'],
 			'int_rate': 'mean',
 			'annual_inc': 'mean',
 			'dti': 'mean'
 		})
+
 	loans_by_grade.columns = ['Funded_amnt', 'avg_int_rate', 'avg_annual_income', 'avg_dti']
 
 	# show some summary borrower statistics by grade and term
@@ -37,7 +43,7 @@ def summarize():
 
 	## chart avg interest rate by vintage_month, grade
 	fig, ax = plt.subplots(figsize = (16, 8))
-	loan.groupby(['vintage_month','grade']).mean()['int_rate'].unstack().plot(ax = ax)
+	loan_df.groupby(['vintage_month','grade']).mean()['int_rate'].unstack().plot(ax = ax)
 	ax.set_xlabel('Vintage Month')
 	ax.set_ylabel('Avg. Interest Rate')
 	ax.set_title('Average Interest Rate by Vintage Month, Grade')
@@ -45,7 +51,7 @@ def summarize():
 
 	## origination volume by month by grade
 	fig, ax = plt.subplots(figsize = (16, 8))
-	loan.groupby(['vintage_month','grade']).sum()['funded_amnt'].unstack().plot(ax = ax)
+	loan_df.groupby(['vintage_month','grade']).sum()['funded_amnt'].unstack().plot(ax = ax)
 	ax.set_yscale('log')
 	ax.set_xlabel('Vintage Month')
 	ax.set_ylabel('Total Funded Amount (log scale, hundred million USD)')
@@ -53,11 +59,11 @@ def summarize():
 	plt.show()
 
 def calculate_returns_36():
-	# Filter df to 36 month loans. n.b. leading space.
-	loan_36 = loan[loan.term == " 36 months"]
+	# Filter df to 36 month loans. NOTE there's a leading space in the string " 36 months"
+	loan_36 = loan_df[loan_df.term == " 36 months"]
 
-	# filter to loans with 36 months of history. Note: some loans are still outstanding (i.e. Late or Defaulted)
-	# at 36 months maturity, so returns may be underestimated
+	# Filter to loans with 36 months of history. Note: some loans are still outstanding (i.e. Late or Defaulted)
+	# at 36 months maturity, so returns are slightly underestimated
 	loan_36_ret = loan_36[(loan_36['vintage_month'] < '2012-12-01') & (loan_36['funded_amnt_inv'] > 0)]
 
 	loans_by_grade = loan_36_ret.groupby('grade').agg({
@@ -85,9 +91,6 @@ def model_calculation(loan_df):
 	print result.summary()
 
 loan_df = load()
-# summarize()
+summarize(loan_df)
 # calculate_returns_36()
-model_calculation(loan_df)
-
-# num_loans = len(loan_36)
-# loan_36['sample'] = p.Series(np.random.randn(sLength), index=df1.index)
+# model_calculation(loan_df)
