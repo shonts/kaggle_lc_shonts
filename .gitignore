@@ -1,3 +1,4 @@
-loan.csv
+*.csv
 loan.csv.zip
+*.docx
 loan_sample.csv

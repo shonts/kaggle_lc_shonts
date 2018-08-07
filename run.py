@@ -12,7 +12,7 @@ def load():
 	print("Done loading csv. Adding return columns")
 
 	# issue_d column is a string, i.e. Apr-2012. format as datetime:
-	loan_df['vintage_month'] = pd.to_datetime(loan['issue_d'], format='%b-%Y')
+	loan_df['vintage_month'] = pd.to_datetime(loan_df['issue_d'], format='%b-%Y')
 	loan_df['vintage_year'] = loan_df['vintage_month'].map(lambda x: x.year)
 
 	# total cash returned to investor on loan is the payments rec'd plus the recoveries minus recovery fees
@@ -36,7 +36,7 @@ def summarize(loan_df):
 			'dti': 'mean'
 		})
 
-	loans_by_grade.columns = ['Funded_amnt', 'avg_int_rate', 'avg_annual_income', 'avg_dti']
+	loans_by_grade.columns = ['Funded_amnt_min', 'Funded_amnt_mean', 'Funded_amnt_max', 'Funded_amnt_sum', 'avg_int_rate', 'avg_annual_income', 'avg_dti']
 
 	# show some summary borrower statistics by grade and term
 	loans_by_grade
@@ -90,7 +90,7 @@ def model_calculation(loan_df):
 	print result.params
 	print result.summary()
 
-loan_df = load()
+# loan_df = load()
 summarize(loan_df)
 # calculate_returns_36()
 # model_calculation(loan_df)
