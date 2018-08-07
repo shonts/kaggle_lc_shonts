@@ -36,10 +36,8 @@ def summarize(loan_df):
 			'dti': 'mean'
 		})
 
-	loans_by_grade.columns = ['Funded_amnt_min', 'Funded_amnt_mean', 'Funded_amnt_max', 'Funded_amnt_sum', 'avg_int_rate', 'avg_annual_income', 'avg_dti']
-
-	# show some summary borrower statistics by grade and term
-	loans_by_grade
+	# write out some summary borrower statistics by grade and term
+	loans_by_grade.to_csv("loans_by_grade.csv")
 
 	## chart avg interest rate by vintage_month, grade
 	fig, ax = plt.subplots(figsize = (16, 8))
@@ -58,7 +56,7 @@ def summarize(loan_df):
 	ax.set_title('Funded Amount by Vintage Month, Grade')
 	plt.show()
 
-def calculate_returns_36():
+def calculate_returns_36(loan_df):
 	# Filter df to 36 month loans. NOTE there's a leading space in the string " 36 months"
 	loan_36 = loan_df[loan_df.term == " 36 months"]
 
@@ -66,7 +64,7 @@ def calculate_returns_36():
 	# at 36 months maturity, so returns are slightly underestimated
 	loan_36_ret = loan_36[(loan_36['vintage_month'] < '2012-12-01') & (loan_36['funded_amnt_inv'] > 0)]
 
-	loans_by_grade = loan_36_ret.groupby('grade').agg({
+	loans_by_grade_year = loan_36_ret.groupby(['grade', 'vintage_year']).agg({
 			'funded_amnt_inv': ['min', 'mean', 'max', 'sum'],
 			'int_rate': 'mean',
 			'funded_amnt_inv' : 'sum',
@@ -76,13 +74,13 @@ def calculate_returns_36():
 	# Calculate returns after aggregation because returns should be cash-weighted
 	#    ($35k loan matters more than $1k loan)
 	# Total return over period is defined as (cash in - cash invested) / (cash invested)
-	loans_by_grade['total_return_wt'] = (loans_by_grade['total_cash_in'] - loans_by_grade['funded_amnt_inv']) / loans_by_grade['funded_amnt_inv']
+	loans_by_grade_year['total_return_wt'] = (loans_by_grade_year['total_cash_in'] - loans_by_grade_year['funded_amnt_inv']) / loans_by_grade_year['funded_amnt_inv']
 
 	# annualized return assumes holding period of 3 years (even if loan prepays or charged off)
 	# this underestimates returns, as principal payments could be re-invested continuously
-	loans_by_grade['annualized_return_wt'] = ((loans_by_grade['total_return_wt'] + 1) ** (1.0/3)) - 1
+	loans_by_grade_year['annualized_return_wt'] = ((loans_by_grade_year['total_return_wt'] + 1) ** (1.0/3)) - 1
 
-	loans_by_grade
+	loans_by_grade_year.to_csv("loans_by_grade_year_returns.csv")
 
 def model_calculation(loan_df):
 	loan_df_cleaned = loan_df[(loan_df['annualized_return'] > -1) & (loan_df['annualized_return'] < 2)]
@@ -90,7 +88,17 @@ def model_calculation(loan_df):
 	print result.params
 	print result.summary()
 
-# loan_df = load()
+	loan_df_cleaned_pre_2010 = loan_df_cleaned[loan_df_cleaned['vintage_year'] <= 2010]
+	result = smf.ols(formula="annualized_return ~ dti + annual_inc + funded_amnt", data = loan_df_cleaned_pre_2010).fit()
+	print result.params
+	print result.summary()
+
+	loan_df_cleaned_post_2010 = loan_df_cleaned[loan_df_cleaned['vintage_year'] > 2010]
+	result = smf.ols(formula="annualized_return ~ dti + annual_inc + funded_amnt", data = loan_df_cleaned_post_2010).fit()
+	print result.params
+	print result.summary()
+
+loan_df = load()
 summarize(loan_df)
-# calculate_returns_36()
-# model_calculation(loan_df)
+calculate_returns_36(loan_df)
+model_calculation(loan_df)

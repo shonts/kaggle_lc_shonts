@@ -1,47 +1,67 @@
+#Overview
+The Lending Club originations file which forms the basis of this project provides a treasure trove of insights into how borrower credit characteristics and loan attributes correlate with credit and prepayment risk. I have attempted to ETL and summarize the data provided, in addition to conducting some basic statistical analyses to investigate how selected credit characteristics (borrower income, borrower DTI, and funded amount) influence annualized returns on a subset of loans. I have also attempted to validate that the results hold across the time period for which data is provided.
 
+#Selected Descriptive Statistics
 
-it appears there are differences between funded_amt and funded_amt_inv (principal coming from external investor). It would be interesting to investigate how lending club allocates principal from external investors vs. its own book.
+I performed a basic aggregation on interest rates charged and amount funded by term and grade. I’ve also included the average values for two important credit attributes of the borrower, Annual Income and DTI.
 
+Especially at the lower grades, there's not a clear relationship between annual income or dti and grade / rate. Intuitively we would expect these two characteristics to be very tightly correlated with risk, so this result is surprising. I will revisit these characteristics below.
 
-statistics:
-especially at the lower grades, there's not a clear relationship between annual income or dti and grade / rate. Intiutively we would expect these two characteristics to be very tightly correlated with risk, so this result is surprising.
-
-
-Figure 1 (Average Interest Rate by Vintage Month, Grade):
-
-the tightening of spreads for the higher grades since 2012 will not be captured in my analysis below, but is worth further investigation
-
-Figure 2 (Funded Amount by Vintage Month, Grade):
+I also present two summary visualizations of the evolution of origination characteristics over time. Given that “Grade” is a central characteristic provided by lending club for portfolio selection, it has been used to stratify both plots.
 
 
 
-prepayment risk
-"Assume a 36 month investment period for each loan"
-could continually reinvest proceeds and principal payments -- a more sophisticated model could account for this.
+Figure 1 (Average Interest Rate by Vintage Month, Grade)
+
+Two interesting trends emerge in figure (1) above: the overall increase over the first six years of originations, potentially in response to sub-market returns, as well as the subsequent tightening of spreads for the higher-quality grades since 2012.
 
 
 
-
-MODEL
-Given the time limitations to this task, the goal was to create an intiutive model of factors that might drive abnormal returns for lendig club loans. Various machine learning models were rejected because of complexity, perils resulting from over-fitting, and inability to coherently interpret the model parameters.
-I ran three simple linear ("Ordinary Least Squares") regressions on several credit characteristics of the borrowers, using my calculated annual return as the dependendent variable. The first model used the entire set of 36 month loans which have a full 36 months of performance history. The second and third models simply split the population between loans originated before December, 2010 and after. My hypothesis is that, given the public availability of this dataset and the growing sophistication of investors in the space, that any clear relationships existing in the data early on will have been noticed by reseachers, and the excess returns will have been arbitraged out of the data in the latter half of the performance history.
-
-If i had the resources to create a more sophisticated model of performance -- for example, one encompassing more credit attributes, or using more complex machine learning algorithms -- i would similarly parameterize the model using this earlier set of performance history and validate whether these relationships hold in the second half of this history (i.e. the training set would be the early loan vintages and the testing set would be the more recent vintages).
+Figure 2 (Funded Amount by Vintage Month, Grade)
 
 
-time dimensionality and orig attribute arbitrage
+
+Figure (2) presents log-scale originations by grade over time. All grades appear to grow in lockstep over time, apart from the lowest quality F and G grade. Growth rates slow in recent years, likely in reflection of increasing market saturation.
 
 
+#Returns on Matured 36 month loans
+Returns were calculated for 36 month loans who had a full history in the data. The return calculation naively assumes that payments received during the life of the loan are held as cash throughout the duration of the loan’s life, when in reality these proceeds could be continually re-invested in similar assets. Returns are calculated on an aggregate level and are therefore weighted by the original loan amount.
+
+The annualized return on all qualifying loans during the period was 3.30%. The cohort with the highest returns was the G grade loans from 2007, however this was on notably low origination volumne (less than $100k total). A full breakout of loan returns by grade and vintage year is included at the end of this document.
+
+[]
+
+#Model
+Given the time limitations to this task, the goal was to create an intuitive model of factors that might drive abnormal returns for Lending Club loans. Various machine learning models were rejected because of complexity, perils resulting from over-fitting, and inability to coherently interpret the model parameters.
+I ran three simple linear ("Ordinary Least Squares") regressions on several credit characteristics of the borrowers, using my calculated annual return as the dependent variable. The coefficients produced by this model, as well as the measures of statistical fit, are easily understood in terms of independent variables.
+
+The origination characteristics chosen for the independent variables were annual income, DTI , and funded amount. These characteristics were chosen as they displayed relatively muted covariance in the dataset -- DTI specifically is an attempt to isolate the existing debt load of a borrower in proportion to their ability to service this debt, whereas annual income indicates the absolute flow of funds – much in the way that the GDP and Debt-to-GDP ratio of a country give us very different and uncorrelated information about a country’s economy.
+
+The first model used the entire set of 36 month loans which have a full 36 months of performance history. The second and third models simply split the population between loans originated before December, 2010 and after. My hypothesis was that, given the public availability of this dataset and the growing sophistication of investors in the space, any clear relationships existing in the data early on will have been noticed by researchers, and the excess returns will have been arbitraged out of the data in the latter half of the performance history.
+
+The model results mildly support this hypothesis, as two of three independent variables displayed reversing relationships with returns between the early and late vintages. Funded amount provided higher returns in the early period (with each additional $1000 borrowed adding 1.7bp of annualized return) but reversed to providing sub-normal returns in the later vintage (with each additional $1000 borrowed detracting 25bp of annualized return).  DTI displayed a less statistically important trend – higher DTI borrowers yielded higher returns in the early vintage, with high statistical significance but a low absolute coefficient of relation of 5.5e-05 in the early vintage, flipping signs to -8e04 in the latter vintage, indicating a reversing relationship with returns. Annual income in both cases was negatively correlated with returns, with an extra dollar of income decreasing annual return by 2.4e-08  in the early cohort to -1.9e-08 in the later cohort – both results significant to > 99% confidence.
+
+Full model outputs provided in the appendix
+
+If I had the resources to create a more sophisticated model of performance -- for example, one encompassing more credit attributes, or using more complex machine learning algorithms -- I would similarly parameterize the model using this earlier set of performance history and validate whether these relationships hold in the second half of this history (i.e. the training set would be the early loan vintages and the testing set would be the more recent vintages).
 
 Further work
 
-technical/data
-This dataset is about 30 months out of date, getting an updated dataset would provide larger sample pool
-Scripts could be placed into a more accessible python package
-code could be optimized for speed / memory footprint.
+Conceptual
+The performance of loans in 2007-2009 is likely highly informative to the performance of this asset class at the end of a credit cycle, and could likely be very useful for approximating the default behavior of the current cohort of loans as we potentially enter a period with similar default and credit market characteristics. Perhaps when assessing an appropriate risk position a further investigation of this period, despite the low volume of originations, could be useful.
 
-conceptual
-loan purpose very data-rich field. Use NLP to tie borrower sentiment, word choice to loan performance
-https://www8.gsb.columbia.edu/newsroom/newsn/5568/words-used-on-loan-applications-can-predict-likelihood-of-default-according-to-new-research-from-columbia-business-school
+It appears there are differences between funded_amt and funded_amt_inv (principal coming in on all loans vs. those held by external investors). On their website, they exclusively use the total amounts issued and recovered, so it would be interesting to investigate performance differences between these two sets of loans.
 
-The performance of loans in 2007-2009 is likely highly informative to the performance of this asset class at the end of a credit cycle, and could likely be very useful for approximating the default behavior of the current cohort of loans. Perhaps when assesing an appropriate risk position a further investigation of this period, despite the low volume of originations, could be useful.
+Loan purpose very data-rich field. I found some interesting research on using NLP to tie borrower word choice and sentiment to loan performance, i.e. :
+https://papers.ssrn.com/sol3/Papers.cfm?abstract_id=2865327
+
+
+Technical
+This dataset is about 30 months out of date. Retrieving an updated dataset would provide larger sample pool for the model, and further validation of patterns displayed in early vintages. Additionally, scripts could be placed into a more accessible python package and the code could be optimized for speed / memory footprint, as well as generalized for re-use on similar datasets.
+
+
+
+Annualized Returns by Grade, Vintage Year
+
+[]
+
